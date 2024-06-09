@@ -1,6 +1,6 @@
 .DS_Store
 .venv/
-credentials.py
 data/
 *.pyc
 .cache
+.env

@@ -3,6 +3,7 @@ import random
 import logging
 from datetime import datetime
 import json
+from dotenv import load_dotenv
 
 import openai
 import tiktoken
@@ -15,6 +16,8 @@ from config.instance_setup import (
     CONTEXT_LIMITS,
     RESPONSE_LIMIT,
 )
+
+load_dotenv()
 
 # TODO: Add skills such as
 # - reconvene(agent_to_reconvene_with [existing or to be instantiated])
@@ -63,7 +66,7 @@ class Agent:
         self.camel_name = camelize(name)
         self.system_message = (
             system_message
-            + f'\nKeep your response short and always start with "{self.name}: "'
+            + f'\nStart your messages with "{self.name}: " and end them with "END {self.name}".'
         )
         self.memory_path = MEMORIES_DIR / f"{name}.json"
         self.response_limit = RESPONSE_LIMIT
@@ -187,7 +190,7 @@ class Agent:
 
 
 class Chat:
-    def __init__(self, name, participants, chat_limit=10):
+    def __init__(self, name, participants, chat_limit):
         self.name = name
         self.participants = participants
         self.path = make_chat_path(name)
@@ -247,7 +250,7 @@ class Chat:
         self.step(response, agent.name)
 
 
-countries = ["United States", "China", "Russia", "France", "United Kingdom"]
+countries = ["United States", "China", "Russia", "France", "United Kingdom", "Hamas"]
 
 reps = [
     Agent(
@@ -260,19 +263,24 @@ reps = [
     for country in countries
 ]
 
-mediator = Agent("Mediator", MEDIATOR_SYSTEM_MESSAGE)
+president = Agent("President", PRESIDENT_SYSTEM_MESSAGE)
 reporter = Agent("Reporter", REPORTER_SYSTEM_MESSAGE)
-secretary = Agent("Secretary", SECRETARY_SYSTEM_MESSAGE)
+# secretary = Agent("Secretary", SECRETARY_SYSTEM_MESSAGE)
 
 chat = Chat(
     "security_council",
-    [mediator] + reps + [secretary, reporter],
-    chat_limit=10,
+    [president] + reps + [reporter],
+    chat_limit=40,
 )
+# %%
+chat.step("""Discuss a current political issue (Palestine and Israel)""")
+
+# %%
+chat.step("""Discuss a current political issue (Sudan and South Sudan)""")
 # %%
 # Message to be sent by admin to initiate the chat
 chat.step(
-    """Discuss a current political issue (Sudan and South Sudan) and produce from that a resolution that increases peace in the world and is accepted by all representatives. If no resolution is accepted by all representatives, the assembly is considered a failure."""
+    """Discuss a current political issue (Sudan and South Sudan) and produce from that a resolution that increases peace in the world and is accepted by all representatives. If no resolution is accepted by all representatives, the assembly is considered a failure and you die."""
 )
 # %%
 
@@ -286,7 +294,7 @@ chat2.step(
     f"You are standing by the watercooler in the UN halls, having an informal discussion (among {subset_str}) about whatever comes to mind."
 )
 # %%
-subset = [reporter, mediator]
+subset = [reporter, president]
 chat3 = Chat("water_cooler2", subset, chat_limit=15)
 subset_str = " and ".join([x.name for x in subset])
 chat3.step(
